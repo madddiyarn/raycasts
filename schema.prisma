@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  passwordHash   String
+  name           String?
+  role           String        @default("CARGO_OWNER") // ADMIN, GOVERNMENT, PORT_OPERATOR, LOGISTICS_OPERATOR, DRIVER, CARGO_OWNER, RECEIVER
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  driverProfile  DriverProfile?
+  auditLogs      AuditLog[]
+  complaints     Complaint[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  type        String // e.g., "PORT", "LOGISTICS", "CARRIER", "GOV"
+  users       User[]
+  vehicles    Vehicle[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DriverProfile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id])
+  licenseNumber  String
+  status         String    @default("AVAILABLE") // AVAILABLE, ON_TRIP, RESTING
+  currentShipmentId String?
+  shipments      Shipment[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Vehicle {
+  id             String       @id @default(cuid())
+  plateNumber    String       @unique
+  type           String       // e.g., "TRUCK_REFRIGERATED", "TRAIN", "VESSEL"
+  capacity       Float
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  status         String       @default("AVAILABLE") // AVAILABLE, IN_TRANSIT, MAINTENANCE
+  shipments      Shipment[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Cargo {
+  id             String         @id @default(cuid())
+  description    String
+  weight         Float
+  type           String         // e.g., "REFRIGERATED", "GENERAL", "HAZMAT"
+  origin         String
+  destination    String
+  status         String         @default("CREATED") // CREATED, VERIFIED, IN_TRANSIT, DELIVERED
+  passport       CargoPassport?
+  shipmentId     String?
+  shipment       Shipment?      @relation(fields: [shipmentId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model CargoPassport {
+  id               String   @id @default(cuid())
+  cargoId          String   @unique
+  cargo            Cargo    @relation(fields: [cargoId], references: [id])
+  qrCodeUrl        String
+  lastVerifiedAt   DateTime?
+  chainOfCustody   String   @default("[]") // JSON string of custody events
+  documents        Document[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Shipment {
+  id             String             @id @default(cuid())
+  cargoes        Cargo[]
+  vehicleId      String?
+  vehicle        Vehicle?           @relation(fields: [vehicleId], references: [id])
+  driverId       String?
+  driver         DriverProfile?     @relation(fields: [driverId], references: [id])
+  status         String             @default("PENDING") // PENDING, ON_ROUTE, DELAYED, COMPLETED
+  currentLat     Float?
+  currentLng     Float?
+  route          Route?             @relation(fields: [routeId], references: [id])
+  routeId        String?
+  stops          ShipmentStop[]
+  locationEvents LocationEvent[]
+  temperatureEvents TemperatureEvent[]
+  predictedEta   DateTime?
+  etaConfidence  Float?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model Route {
+  id          String      @id @default(cuid())
+  name        String
+  origin      String
+  destination String
+  shipments   Shipment[]
+  checkpoints Checkpoint[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Checkpoint {
+  id          String    @id @default(cuid())
+  name        String
+  locationLat Float
+  locationLng Float
+  routeId     String
+  route       Route     @relation(fields: [routeId], references: [id])
+  capacity    Int       @default(100)
+  currentQueue Int      @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ShipmentStop {
+  id          String    @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id])
+  location    String
+  sequence    Int
+  status      String    @default("PENDING") // PENDING, ARRIVED, DEPARTED
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model LocationEvent {
+  id          String    @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id])
+  lat         Float
+  lng         Float
+  speed       Float?
+  timestamp   DateTime  @default(now())
+}
+
+model TemperatureEvent {
+  id          String    @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id])
+  temperature Float
+  isAlert     Boolean   @default(false)
+  timestamp   DateTime  @default(now())
+}
+
+model Document {
+  id              String         @id @default(cuid())
+  passportId      String
+  passport        CargoPassport  @relation(fields: [passportId], references: [id])
+  type            String         // e.g., "CUSTOMS", "BILL_OF_LADING"
+  url             String
+  verified        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+}
+
+model Bottleneck {
+  id               String    @id @default(cuid())
+  locationName     String
+  lat              Float
+  lng              Float
+  severity         String    // YELLOW, RED
+  averageDelayMins Int
+  affectedShipments Int
+  economicImpact   Float
+  rootCause        String
+  confidence       Float
+  predictedEscalation DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Complaint {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    // e.g., LATE_DELIVERY, CARGO_DAMAGE
+  content     String
+  audioUrl    String?
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  action      String
+  entityId    String
+  entityType  String
+  details     String    // JSON string
+  createdAt   DateTime  @default(now())
+}
