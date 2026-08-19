@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #0a0a0a;              /* фон страницы */
+    --color-surface-1: #0b0b0b;       /* базовые карточки */
+    --color-surface-2: #0f0f0f;       /* элементы/кнопки */
+    --color-surface-3: #121212;       /* глубокий фон */
+    --color-text-1: #ffffff;          /* основной текст */
+    --color-text-2: #cfcfcf;          /* вторичный */
+    --color-text-3: #a7a7a7;          /* третичный */
+    --color-text-4: #6b6b6b;          /* подписи */
+    --color-text-5: #4a4a4a;          /* тонкие подписи */
+    --color-border-1: #1f1f1f;        /* контуры, карточки */
+    --color-border-2: #1a1a1a;        /* тёмные контуры */
+    --color-border-hover-1: #2a2a2a;  /* hover */
+    --color-border-hover-2: #3a3a3a;  /* hover усиленный */
+    --color-accent-warm: #F3E6A2;     /* тёплый акцент */
+    --color-accent-warm-2: #e0a96d;   /* иконки/метки */
+    --grad-hero-from: #7CF8E5;        /* hero‑градиент */
+    --grad-hero-to:   #C3FBFF;
+
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;  /* капсулы/карточки */
+
+    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --text-xs: 13px;     /* подписи/значки */
+    --text-sm: 15px;     /* мелкий текст */
+    --text-base: 18px;   /* базовый крупнее */
+    --h2: 48px;          /* заголовки секций */
+    --h1: 88px;          /* главный заголовок */
+
+    --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --dur-fast: 200ms;
+    --dur-mid: 300ms;
+  }
+}
+
+html { 
+  scroll-behavior: smooth; 
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-1);
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(rgba(255, 214, 120, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(255, 214, 120, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 214, 120, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px, 22px 22px, 22px 22px;
+  background-position: center center;
+}
+
+.site-content { 
+  position: relative; 
+  z-index: 1; 
+}
+
+/* Секции: паттерны */
+.bg-grid-pattern { position: relative; }
+.bg-grid-pattern::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 214, 120, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 214, 120, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px; background-position: center center;
+}
+
+.bg-dots-pattern { position: relative; }
+.bg-dots-pattern::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(rgba(255, 214, 120, 0.06) 1.5px, transparent 1.5px);
+  background-size: 22px 22px; background-position: center center;
+}
+
+/* Моно‑подписи */
+.font-mono { font-family: var(--font-mono) !important; }
+
+/* Капсулы (кнопки/линки) */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-size: var(--text-xs);
+  background: color-mix(in srgb, var(--color-surface-2) 100%, transparent);
+  border: 1px solid var(--color-border-2); color: var(--color-text-2);
+  border-radius: 999px; transition: all var(--dur-fast) ease-out;
+}
+.btn:hover { background: #141414; border-color: var(--color-border-hover-1); color: #fff; }
+
+/* Карточки */
+.card {
+  position: relative; background: var(--color-surface-1);
+  border: 1px dashed var(--color-border-1); border-radius: var(--radius-lg);
+  padding: 24px; overflow: hidden;
+}
+.card__aura { pointer-events: none; position: absolute; inset: 0; opacity: 0; transition: opacity var(--dur-mid) ease-out; }
+.card:hover .card__aura { opacity: 1; }
+
+/* Чипы/бейджи */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 8px; font-size: 11px; border-radius: 999px;
+  background: var(--color-surface-2); border: 1px solid var(--color-border-2);
+  color: #dcdcdc; font-family: var(--font-mono);
+}
+
+/* Ссылки с пунктирным подчёркиванием */
+.link-dotted { position: relative; padding-right: 14px; }
+.link-dotted::after { content: ""; position: absolute; left: 0; right: 14px; bottom: -2px; border-bottom: 1px dotted var(--color-border-1); }
+.link-dotted:hover::after { border-bottom-color: var(--color-border-hover-1); }
+
+/* Scrollbar (WebKit) */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border-1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-hover-1); }
+
+/* Предпочтения по анимациям */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in, .animate-fade-in-up, .animate-slide-in-left { animation: none !important; opacity: 1 !important; }
+}
